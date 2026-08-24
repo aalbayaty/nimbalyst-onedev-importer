@@ -139,15 +139,22 @@ export function activate(ctx: any) {
           target(cfg),
           `/~api/issues?query=${encodeURIComponent(query)}&offset=${offset}&count=${count}`,
         );
-        let items = (Array.isArray(issues) ? issues : [])
-          .map((i: any) => mapListEntry(i, project, cfg.serverUrl));
+        const rawIssues = Array.isArray(issues) ? issues : [];
+        let items: ReturnType<typeof mapListEntry>[] = [];
+        for (const i of rawIssues) {
+          try {
+            items.push(mapListEntry(i, project, cfg.serverUrl));
+          } catch (err: any) {
+            log('warn', `onedev: skipping malformed issue in ${project}: ${err?.message ?? err}`);
+          }
+        }
         if (filters.search) {
           const needle = String(filters.search).toLowerCase();
           items = items.filter(
             (e) => e.title.toLowerCase().includes(needle) || e.externalId.toLowerCase().includes(needle),
           );
         }
-        const nextCursor = (Array.isArray(issues) ? issues.length : 0) >= count
+        const nextCursor = rawIssues.length >= count
           ? String(offset + count)
           : undefined;
         return { items, nextCursor };
