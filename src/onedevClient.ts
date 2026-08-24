@@ -85,6 +85,7 @@ function lastActivityDate(issue: Record<string, any>): string | null {
 
 export function mapListEntry(issue: Record<string, any>, project: string, serverUrl: string) {
   const number = Number(issue.number);
+  if (!Number.isFinite(number)) throw new Error(`OneDev issue in ${project} has no usable "number" field`);
   return {
     externalId: buildExternalId(project, number),
     urn: buildUrn(project, number),
@@ -97,6 +98,7 @@ export function mapListEntry(issue: Record<string, any>, project: string, server
 
 export function mapIssueDetail(issue: Record<string, any>, project: string, serverUrl: string) {
   const number = Number(issue.number);
+  if (!Number.isFinite(number)) throw new Error(`OneDev issue in ${project} has no usable "number" field`);
   const submitterName: string | null =
     issue.submitter?.fullName ?? issue.submitter?.name ?? issue.submitterName ?? null;
   return {

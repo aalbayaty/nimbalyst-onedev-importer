@@ -1,9 +1,8 @@
 import { spawn } from 'node:child_process';
 import type { OneDevConfig } from './onedevClient';
 import {
-  PROVIDER_ID,
   normalizeServerUrl, parseOpenStates, buildAuthHeader,
-  buildExternalId, parseExternalId, buildIssuesQuery,
+  parseExternalId, buildIssuesQuery,
   parseOneDevRemote, mapListEntry, mapIssueDetail, escapeQueryValue,
 } from './onedevClient';
 import { oneDevGetJson } from './http';
@@ -113,17 +112,26 @@ export function activate(ctx: any) {
           return bindings;
         }
         const projects = await oneDevGetJson(target(cfg), '/~api/projects?offset=0&count=100');
-        return (Array.isArray(projects) ? projects : [])
-          .map((p: any) => String(p.path ?? p.name ?? ''))
-          .filter(Boolean)
-          .map((path: string) => ({ id: path, label: path }));
+        const rawProjects = Array.isArray(projects) ? projects : [];
+        const mapped = rawProjects
+          .filter((p: any) => typeof p.path === 'string' && p.path.length > 0)
+          .map((p: any) => ({ id: p.path as string, label: p.path as string }));
+        if (mapped.length === 0 && rawProjects.length > 0) {
+          throw new Error(
+            'OneDev did not report project paths; set the Project setting in Settings (OneDev Importer) ' +
+            'to your project path, e.g. org/app.',
+          );
+        }
+        return mapped;
       },
 
       'importer.list': async (params: any) => {
         const cfg = requireConfig(ctx);
         const project: string = params.binding.id;
         const filters = params.filters ?? {};
-        const count = Math.min(filters.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+        log('debug', `onedev: list filters state=${String(filters.state)} limit=${String(filters.limit)} ` +
+          `cursor=${String(filters.cursor)} search=${filters.search ? 'yes' : 'no'}`);
+        const count = Math.min(Math.max(1, Number(filters.limit) || DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
         const offset = filters.cursor ? Number(filters.cursor) || 0 : 0;
         const states = (filters.state ?? 'open') === 'open' ? cfg.openStates : [];
         const query = buildIssuesQuery({ project, states });

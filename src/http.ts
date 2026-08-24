@@ -32,5 +32,11 @@ export async function oneDevGetJson(
     const snippet = (await res.text().catch(() => '')).slice(0, 200);
     throw new Error(`OneDev HTTP ${res.status} for GET ${pathAndQuery}: ${snippet}`);
   }
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new Error(
+      `OneDev returned a non-JSON response for GET ${pathAndQuery} — check that Server URL points at a OneDev server`,
+    );
+  }
 }

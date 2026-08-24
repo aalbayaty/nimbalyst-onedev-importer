@@ -56,6 +56,11 @@ describe('issue query building', () => {
       .toBe('"Project" is "org/app" and ("State" is "Open" or "State" is "Reopened")');
   });
 
+  it('builds a project-scoped query with a single state', () => {
+    expect(buildIssuesQuery({ project: 'org/app', states: ['Open'] }))
+      .toBe('"Project" is "org/app" and "State" is "Open"');
+  });
+
   it('omits the state clause when states is empty or absent (i.e. state filter "all")', () => {
     expect(buildIssuesQuery({ project: 'org/app', states: [] })).toBe('"Project" is "org/app"');
     expect(buildIssuesQuery({ project: 'org/app' })).toBe('"Project" is "org/app"');
@@ -130,5 +135,13 @@ describe('issue mapping', () => {
     expect(d.upstreamCreatedAt).toBeNull();
     expect(d.upstreamUpdatedAt).toBeNull();
     expect(mapListEntry(bare, 'org/app', 'https://dev.example.com').updatedAt).toBeNull();
+  });
+
+  it('throws when the issue has no usable number field', () => {
+    const noNumber = { title: 'x', state: 'Open' };
+    expect(() => mapListEntry(noNumber, 'org/app', 'https://dev.example.com'))
+      .toThrow(/no usable "number"/);
+    expect(() => mapIssueDetail(noNumber, 'org/app', 'https://dev.example.com'))
+      .toThrow(/no usable "number"/);
   });
 });

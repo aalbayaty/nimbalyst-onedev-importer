@@ -12,6 +12,9 @@ beforeAll(async () => {
     if (req.url?.startsWith('/ok')) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify([{ number: 1 }]));
+    } else if (req.url?.startsWith('/html')) {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end('<html>login</html>');
     } else if (req.url?.startsWith('/slow')) {
       // never respond; the client should abort
     } else {
@@ -42,6 +45,10 @@ describe('oneDevGetJson', () => {
     );
     expect(err.message).toMatch(/HTTP 401/);
     expect(err.message.length).toBeLessThan(300);
+  });
+
+  it('rejects with a clear error on a non-JSON 200 response', async () => {
+    await expect(oneDevGetJson(cfg(), '/html')).rejects.toThrow(/non-JSON response/);
   });
 
   it('aborts after the timeout', async () => {
