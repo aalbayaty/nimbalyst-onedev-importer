@@ -1,0 +1,77 @@
+{
+  "id": "com.nimbalyst-community.onedev-importer",
+  "name": "OneDev Issues Importer",
+  "version": "0.1.0",
+  "description": "Import OneDev issues into the Nimbalyst tracker as native items that link back to their source. Connects to your self-hosted OneDev server with an access token.",
+  "author": "Ahmad",
+  "main": "dist/index.js",
+  "apiVersion": "1.0.0",
+  "permissions": {
+    "network": true
+  },
+  "contributions": {
+    "trackerImporters": [
+      {
+        "id": "onedev-issues",
+        "displayName": "OneDev Issues",
+        "icon": "bug_report",
+        "urnScheme": "onedev",
+        "backendModuleId": "onedev-backend",
+        "importsAs": ["bug", "task", "feature"]
+      }
+    ],
+    "backendModules": [
+      {
+        "id": "onedev-backend",
+        "entry": "dist/backend.js",
+        "runtime": "utility-process",
+        "permissions": [],
+        "enablement": {
+          "default": "disabled",
+          "promptOn": "firstUse",
+          "purpose": "Read issues from your configured OneDev server so you can import them into the tracker."
+        }
+      }
+    ],
+    "configuration": {
+      "title": "OneDev Importer",
+      "properties": {
+        "serverUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL of your OneDev server, e.g. https://onedev.example.com",
+          "scope": "user",
+          "order": 1
+        },
+        "username": {
+          "type": "string",
+          "default": "",
+          "description": "Optional. If set, HTTP Basic auth (username:token) is used; if empty, the token is sent as a Bearer token.",
+          "scope": "user",
+          "order": 2
+        },
+        "apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "OneDev access token (user menu → Access Tokens on your server)",
+          "scope": "user",
+          "order": 3
+        },
+        "project": {
+          "type": "string",
+          "default": "",
+          "description": "Optional. Explicit OneDev project path for this workspace (overrides git-remote detection).",
+          "scope": "workspace",
+          "order": 4
+        },
+        "openStates": {
+          "type": "string",
+          "default": "Open",
+          "description": "Comma-separated issue state names treated as \"open\" (OneDev states are customizable per server)",
+          "scope": "user",
+          "order": 5
+        }
+      }
+    }
+  }
+}
