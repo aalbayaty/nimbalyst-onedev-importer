@@ -136,7 +136,7 @@ export function activate(ctx: any) {
         if (filters.search) {
           const needle = String(filters.search).toLowerCase();
           items = items.filter(
-            (e) => e.title.toLowerCase().includes(needle) || e.externalId.includes(needle),
+            (e) => e.title.toLowerCase().includes(needle) || e.externalId.toLowerCase().includes(needle),
           );
         }
         const nextCursor = (Array.isArray(issues) ? issues.length : 0) >= count
@@ -156,7 +156,11 @@ export function activate(ctx: any) {
             target(cfg),
             `/~api/issues?query=${encodeURIComponent(query)}&offset=0&count=1`,
           );
-        } catch {
+        } catch (err: any) {
+          // Only fall back on HTTP 4xx (query-format rejection); rethrow other errors.
+          if (!/OneDev HTTP 4\d\d /.test(err?.message ?? '')) {
+            throw err;
+          }
           // Some OneDev versions want the number criterion as "project#number".
           const alt = `"Number" is "${escapeQueryValue(`${project}#${number}`)}"`;
           issues = await oneDevGetJson(
