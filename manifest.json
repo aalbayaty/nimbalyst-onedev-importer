@@ -1,7 +1,7 @@
 {
   "id": "com.nimbalyst-community.onedev-importer",
   "name": "OneDev Issues Importer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Import OneDev issues into the Nimbalyst tracker as native items that link back to their source. Connects to your self-hosted OneDev server with an access token.",
   "author": "Ahmad",
   "main": "dist/index.js",

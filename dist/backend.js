@@ -1,4 +1,7 @@
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 const PROVIDER_ID = "onedev-issues";
 const URN_SCHEME = "onedev";
 function normalizeServerUrl(raw) {
@@ -129,8 +132,38 @@ async function oneDevGetJson(target2, pathAndQuery, timeoutMs = DEFAULT_TIMEOUT_
     );
   }
 }
+function readExtensionConfigurationFromFile(filePath, extensionId) {
+  try {
+    const raw = readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw);
+    const configuration = parsed?.extensionSettings?.[extensionId]?.configuration;
+    if (configuration && typeof configuration === "object" && !Array.isArray(configuration)) {
+      return configuration;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+function appSettingsCandidatePaths() {
+  const home = homedir();
+  const appData = process.env.APPDATA || join(home, "AppData", "Roaming");
+  return [
+    join(home, ".config", "@nimbalyst", "electron", "app-settings.json"),
+    join(appData, "@nimbalyst", "electron", "app-settings.json"),
+    join(home, "Library", "Application Support", "@nimbalyst", "electron", "app-settings.json")
+  ];
+}
+function readAppSettingsConfiguration(extensionId) {
+  for (const path of appSettingsCandidatePaths()) {
+    const config = readExtensionConfigurationFromFile(path, extensionId);
+    if (Object.keys(config).length > 0) return config;
+  }
+  return {};
+}
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
+const EXTENSION_ID = "com.nimbalyst-community.onedev-importer";
 function runGit(args, cwd) {
   return new Promise((resolve) => {
     const child = spawn("git", args, { cwd, timeout: 1e4, stdio: ["ignore", "pipe", "ignore"] });
@@ -148,7 +181,13 @@ function settingReader(ctx) {
     (k) => ctx?.services?.config?.[k],
     (k) => ctx?.configuration?.[k],
     (k) => ctx?.config?.[k],
-    (k) => ctx?.settings?.[k]
+    (k) => ctx?.settings?.[k],
+    // Workaround for the host not delivering `configuration` to backend
+    // modules: read this extension's own key from Nimbalyst's
+    // app-settings.json directly. Re-evaluated on every read (no caching)
+    // so changes made in Settings apply without a backend restart. See
+    // appSettingsFile.ts for details; remove once the platform fixes delivery.
+    (k) => readAppSettingsConfiguration(EXTENSION_ID)[k]
   ];
   return (key) => {
     for (const read of surfaces) {

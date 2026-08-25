@@ -1,6 +1,6 @@
 {
   "name": "@nimbalyst-community/extension-onedev-importer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OneDev issues importer for the Nimbalyst tracker",
   "main": "dist/index.js",
   "type": "module",

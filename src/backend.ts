@@ -6,9 +6,11 @@ import {
   parseOneDevRemote, mapListEntry, mapIssueDetail, escapeQueryValue,
 } from './onedevClient';
 import { oneDevGetJson } from './http';
+import { readAppSettingsConfiguration } from './appSettingsFile';
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
+const EXTENSION_ID = 'com.nimbalyst-community.onedev-importer';
 
 type Logger = (level: string, message: string) => void;
 
@@ -29,6 +31,12 @@ function settingReader(ctx: any): (key: string) => unknown {
     (k) => ctx?.configuration?.[k],
     (k) => ctx?.config?.[k],
     (k) => ctx?.settings?.[k],
+    // Workaround for the host not delivering `configuration` to backend
+    // modules: read this extension's own key from Nimbalyst's
+    // app-settings.json directly. Re-evaluated on every read (no caching)
+    // so changes made in Settings apply without a backend restart. See
+    // appSettingsFile.ts for details; remove once the platform fixes delivery.
+    (k) => readAppSettingsConfiguration(EXTENSION_ID)[k],
   ];
   return (key) => {
     for (const read of surfaces) {

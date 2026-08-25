@@ -16,6 +16,16 @@ back to their source.
 Env fallbacks (useful for headless setups): `ONEDEV_URL`, `ONEDEV_TOKEN`,
 `ONEDEV_USERNAME`.
 
+**Known limitation:** Nimbalyst's host does not yet deliver `configuration`
+values to backend modules (the utility-process runtime this extension's
+importer logic runs in). As a workaround, the backend reads its own settings
+directly from Nimbalyst's `app-settings.json` on disk (see
+`src/appSettingsFile.ts`); it never reads any other extension's settings.
+This is transparent to normal use — Settings UI values still apply, and
+changes take effect without a backend restart — but it will be removed once
+the platform ships settings delivery to backend modules. The env vars above
+remain a fallback on top of it.
+
 ## Development
 
 ```bash
